@@ -71,20 +71,33 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
   const { title, deadline } = request.body;
   const { id } = request.params;
 
-  const indexTarefa = user.todos.findIndex((idTarefa) => idTarefa.id === id);
+  const todo = user.todos.find((todo) => todo.id === id);
+  (todo.title = title), (todo.deadline = new Date(deadline));
 
-  user.todos[indexTarefa].title = title;
-  user.todos[indexTarefa].deadline = deadline;
-
-  return response.status(200).json(users);
+  return response.json(todo);
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
   // Complete aqui
+  const { user } = request;
+  const { id } = request.params;
+
+  const todo = user.todos.find((todo) => todo.id === id);
+
+  todo.done = true;
+
+  return response.json(todo);
 });
 
 app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
   // Complete aqui
+  const { user } = request;
+  const { id } = request.params;
+
+  const todoIndex = user.todos.findIndex((todo) => todo.id === id);
+
+  user.todos.splice(todoIndex, 1);
+  return response.status(204).json({ message: "Tarefa excluida" });
 });
 
 module.exports = app;
