@@ -16,7 +16,7 @@ function checksExistsUserAccount(request, response, next) {
   const user = users.find((user) => user.username === username); // retorna o objeto completo
 
   if (!user) {
-    return response.status(400).send({ error: "User não encontrado" });
+    return response.status(404).send({ error: "User não encontrado" });
   }
 
   request.user = user;
@@ -33,20 +33,23 @@ app.post("/users", (request, response) => {
   if (verifyExistUser) {
     return response.status(400).send({ error: "username já existe" });
   } else {
-    users.push({
+    const user = {
       id: uuidv4(),
       name: name,
       username: username,
       todos: [],
-    });
-    return response.status(200).send(users);
+    };
+
+    users.push(user);
+
+    return response.status(201).send(user);
   }
 });
 
 app.get("/todos", checksExistsUserAccount, (request, response) => {
   // Complete aqui
   const { user } = request;
-  return response.status(200).json(user);
+  return response.status(200).json(user.todos);
 });
 
 app.post("/todos", checksExistsUserAccount, (request, response) => {
@@ -54,15 +57,17 @@ app.post("/todos", checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const { title, deadline } = request.body;
 
-  user.todos.push({
+  const todo = {
     id: uuidv4(),
     title: title,
     done: false,
     deadline: new Date(deadline),
     created_at: new Date(),
-  });
+  };
 
-  return response.status(200).json(user);
+  user.todos.push(todo);
+
+  return response.status(201).json(todo);
 });
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
@@ -72,7 +77,13 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
   const { id } = request.params;
 
   const todo = user.todos.find((todo) => todo.id === id);
-  (todo.title = title), (todo.deadline = new Date(deadline));
+
+  if (!todo) {
+    response.status(400).send({ error: "Não encontrado" });
+  } else {
+    todo.title = title;
+    todo.deadline = new Date(deadline);
+  }
 
   return response.json(todo);
 });
@@ -84,7 +95,11 @@ app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
 
   const todo = user.todos.find((todo) => todo.id === id);
 
-  todo.done = true;
+  if (!todo) {
+    response.status(400).send({ error: "Não encontrado" });
+  } else {
+    todo.done = true;
+  }
 
   return response.json(todo);
 });
@@ -96,8 +111,13 @@ app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
 
   const todoIndex = user.todos.findIndex((todo) => todo.id === id);
 
-  user.todos.splice(todoIndex, 1);
-  return response.status(204).json({ message: "Tarefa excluida" });
+  if (todoIndex === -1) {
+    response.status(404).send({ error: "Não encontrado" });
+  } else {
+    user.todos.splice(todoIndex, 1);
+  }
+
+  return response.status(204);
 });
 
 module.exports = app;
