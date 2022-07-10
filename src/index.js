@@ -25,18 +25,24 @@ function checksExistsUserAccount(request, response, next) {
 
 app.post("/users", (request, response) => {
   // Complete aqui
+
   const { name, username } = request.body;
 
-  const user = {
-    id: uuidv4(),
-    name: name,
-    username: username,
-    todos: [],
-  };
+  const verifyExistUser = users.some((user) => user.username === username);
 
-  users.push(user);
+  if (verifyExistUser) {
+    return response.status(400).send({ error: "username já existe" });
+  } else {
+    const user = {
+      id: uuidv4(),
+      name: name,
+      username: username,
+      todos: [],
+    };
 
-  return response.status(200).send(user);
+    users.push(user);
+    return response.status(200).send(user);
+  }
 });
 
 app.get("/todos", checksExistsUserAccount, (request, response) => {
